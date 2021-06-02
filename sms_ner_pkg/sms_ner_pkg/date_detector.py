@@ -1,5 +1,4 @@
-import sms_ner_pkg.sms_ner_pkg.data_loader as dataLoader
-import os
+import time
 
 class DateDetector():
     def __init__(self):
@@ -25,6 +24,13 @@ class DateDetector():
     def hasNumbers(self, word):
         return any(char.isdigit() for char in word)
 
+    def isDateFormat(self, input):
+        try:
+            time.strptime(input, '%m.%d')
+            return True
+        except ValueError:
+            return False
+
     # 날짜와 관련된 단어인지 유효성 검사
     def isValid(self, word, idx):
         if '월' in word or '일' in word:
@@ -42,33 +48,38 @@ class DateDetector():
         return word
 
     # 각 문장에 포함된 날짜와 관련된 단어를 dates에 추가
-    def date_detector(self, messages):
-        for message in messages:
-            words = message.split(' ')
-            self.words = words
-            for word in words:
-                # dateWords 내의 단어가 있는지 검사
-                for dateWord in self.dateWords:
-                    if dateWord in word:
-                        _dateWord = self.deleteSpecialCharacters(dateWord) #특수문자 삭제
-                        self.addDate(_dateWord)
-                # targetWords 내의 단어가 있는지 검사
-                for targetWord in self.targetWords:
-                    if targetWord in word:
-                        idx = words.index(word)
-                        if self.isValid(word,idx):
-                            _word = self.deleteSpecialCharacters(word) #특수문자 삭제
-                            self.addDate(_word.split('에')[0]) #조사 삭제
+    def date_detector(self, message):
+        words = message.split()
+        self.words = words
+        for word in words:
+            # 정규식 검사
+            index = word.index('~') if '~' in word else word.index('-') if '-' in word else 0
+            if index != 0: # 기간으로 주어지는 경우
+                start, end = word[:index], word[index + 1:]
+                if self.isDateFormat(start) and self.isDateFormat(end):
+                    self.addDate(start + "-" + end)
+                    continue
+            else:
+                if "(" in word: word = str(word[:word.index("(")])
+                if self.isDateFormat(str(word)):
+                    self.addDate(word)
+                    continue
 
-def getMessages():
-    messages = dataLoader._read_data_file()
-    return messages
+            # dateWords 내의 단어가 있는지 검사
+            done = False
+            for dateWord in self.dateWords:
+                if dateWord in word:
+                    _dateWord = self.deleteSpecialCharacters(dateWord) #특수문자 삭제
+                    self.addDate(_dateWord)
+                    done = True
+            if done: continue
 
-if __name__ == "__main__":
-    os.chdir(r'C:\Users\ghio1\PycharmProjects\senior-project-2021\sms_ner_pkg\sms_ner_pkg\data')
-    current_path = os.getcwd()
-    messages = dataLoader.sms_data_loader(current_path)
+            # targetWords 내의 단어가 있는지 검사
+            for targetWord in self.targetWords:
+                if targetWord in word:
+                    idx = words.index(word)
+                    if self.isValid(word,idx):
+                        _word = self.deleteSpecialCharacters(word) #특수문자 삭제
+                        self.addDate(_word.split('에')[0]) #조사 삭제
 
-    dateDetector = DateDetector()
-    dateDetector.date_detector(messages)
-    print(dateDetector.getDates())
+        return self.getDates()
