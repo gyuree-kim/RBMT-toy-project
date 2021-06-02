@@ -1,5 +1,4 @@
-import os
-import sms_ner_pkg.sms_ner_pkg.data_loader as dataLoader
+import time
 
 class TimeDetector():
     def __init__(self):
@@ -15,6 +14,13 @@ class TimeDetector():
 
     def addTime(self, word):
         if word: self.times.append(word)
+
+    def isTimeFormat(self, input):
+        try:
+            time.strptime(input, '%H:%M')
+            return True
+        except ValueError:
+            return False
 
     def hasNumbers(self, str):
         return any(char.isdigit() for char in str)
@@ -66,13 +72,19 @@ class TimeDetector():
 
         # sentence 안에 시간과 관련된 단어만 times에 추가.
         for word in words:
-            #timeWords 단어 검사
-            for timeWord in self.timeWords:
-                if timeWord in word:
-                    _word = self.deleteSpecialCharacters(word)
-                    _word = self.getOnlyTimeWord(_word)
-                    self.addTime(_word)
+            # 정규식 검사
+            index = word.index('~') if '~' in word else word.index('-') if '-' in word else 0
+            if index == 0:
+                if self.isTimeFormat(word):
+                    self.addTime(word)
+                    continue
+            start, end = word[:index], word[index+1:]
+            if self.isTimeFormat(start) and self.isTimeFormat(end):
+                self.addTime(start+"-"+end)
+                continue
+
             #targetWords 단어 검사
+            done = False
             for targetWord in self.targetWords:
                 if targetWord in word:
                     idx = words.index(word)
@@ -80,14 +92,13 @@ class TimeDetector():
                         _word = self.deleteSpecialCharacters(word)
                         _word = self.getOnlyTimeWord(_word)
                         self.addTime(_word)
+                        done = True
+            if done: continue
+
+            #timeWords 단어 검사
+            for timeWord in self.timeWords:
+                if timeWord in word:
+                    _word = self.deleteSpecialCharacters(word)
+                    _word = self.getOnlyTimeWord(_word)
+                    self.addTime(_word)
         return self.times
-
-if __name__ == "__main__":
-    os.chdir(r'C:\Users\ghio1\PycharmProjects\senior-project-2021\sms_ner_pkg\sms_ner_pkg\data')
-    current_path = os.getcwd()
-    messages = dataLoader.sms_data_loader(current_path)
-    timeDetector = TimeDetector()
-    for message in messages:
-        timeDetector.time_detector(message)
-    print(timeDetector.getTime())
-
