@@ -14,6 +14,8 @@ def loc_detector(root_path, messages):
     konlp_loc = []  #형태소 파싱 후 주소후보 리스트
 
     for message in messages:
+        # 재난문자 구분
+        # type = _get_sms_type(message)
         # 정규표현식 도로명주소 추출
         load_location = _get_road_address(message)
         if load_location:   # 도로명 주소가 존재한다면
@@ -73,37 +75,7 @@ def _get_subway_location(root_path, locations):
                 subway_list.append(location + "역")  # subway 데이터에 생략된 '역'문자 추가
 
     return subway_list
-def measure_accuracy(candi_list):
-    answer_list = [#"롯시", "집", "학교앞", "코엑스", "왕십리역", "3번출구", "스타벅스", "투썸", "탐앤탐스", #input.txt 데이터
-                   #"설악산", "고속터밀널역", "부평역", "잇빗 511호", "2001아울렛", "자연초등학교", "도서관",
-                   "부평역", "인천공항", "공항철도", "영종역",
-                   "사당역", "서울대입구", "인천", "서울", "녹사평역", "강남역", "9번 출구",
-                   "용두", "청량리", "노원", "10번출구",
-                   "동문회관", "신정문", "제1의학관", "중도",
-                   "혜리꽃케이크", "부평문화로77", "VR게임장", "카페비모",  "2공", "중도", "한양대역", "로비",
-                   "수원역", "노보텔", "4번출구", "와플대학", "어묵대학", "AK FOODHALL", "도봉산역"]
-    real_answer_list = ["영종역", "서울대입구", "녹사평역", "강남역", "용두역", "중도앞", "부평문화로77", "혜리꽃케이크",
-                        "VR게임장", "카페비모", "중도", "수원역", "도봉산역"]
-    answer_num = len(answer_list)
-    candi_num = len(candi_list)
-    real_num = len(real_answer_list)
-    correct_num = 0
-    r_correct_num = 0
-    for candidate in candi_list:
-        for answer in answer_list:
-            if answer[-1] == '역':  # 마지막이 역으로 끝나면 '역'제거
-                answer = answer[:-1]
-            if answer in candidate:
-                correct_num += 1
-    print(correct_num,"/",answer_num,"= ",correct_num/answer_num*100)
-    for candidate in candi_list:
-        for r_answer in real_answer_list:
-            if r_answer[-1] == '역':
-                r_answer = r_answer[:-1]
-            if r_answer in candidate:
-                r_correct_num += 1
-    print(r_correct_num,"//",real_num, "= ",r_correct_num/real_num*100)
-    return correct_num/answer_num*100
+
 
 def _find_chosung(string):
     # 첫글자 초성 추출
@@ -118,6 +90,10 @@ def _find_chosung(string):
     # print(first_chosung)
     return first_chosung
 
+
+def _get_sms_type(sentence):
+    print(sentence+"\n\n")
+    return 0
 
 
 def _get_road_address(sentence):
@@ -181,6 +157,38 @@ def _delete_jamo(_sentence):
             sentence += i
     return sentence
 
+
+def measure_accuracy(candi_list):
+    answer_list = [#"롯시", "집", "학교앞", "코엑스", "왕십리역", "3번출구", "스타벅스", "투썸", "탐앤탐스", #input.txt 데이터
+                   #"설악산", "고속터밀널역", "부평역", "잇빗 511호", "2001아울렛", "자연초등학교", "도서관",
+                   "부평역", "인천공항", "공항철도", "영종역",
+                   "사당역", "서울대입구", "인천", "서울", "녹사평역", "강남역", "9번 출구",
+                   "용두", "청량리", "노원", "10번출구",
+                   "동문회관", "신정문", "제1의학관", "중도",
+                   "혜리꽃케이크", "부평문화로77", "VR게임장", "카페비모",  "2공", "중도", "한양대역", "로비",
+                   "수원역", "노보텔", "4번출구", "와플대학", "어묵대학", "AK FOODHALL", "도봉산역"]
+    real_answer_list = ["영종역", "서울대입구", "녹사평역", "강남역", "용두역", "중도앞", "부평문화로77", "혜리꽃케이크",
+                        "VR게임장", "카페비모", "중도", "수원역", "도봉산역"]
+    answer_num = len(answer_list)
+    candi_num = len(candi_list)
+    real_num = len(real_answer_list)
+    correct_num = 0
+    r_correct_num = 0
+    for candidate in candi_list:
+        for answer in answer_list:
+            if answer[-1] == '역':  # 마지막이 역으로 끝나면 '역'제거
+                answer = answer[:-1]
+            if answer in candidate:
+                correct_num += 1
+    print(correct_num,"/",answer_num,"= ",correct_num/answer_num*100)
+    for candidate in candi_list:
+        for r_answer in real_answer_list:
+            if r_answer[-1] == '역':
+                r_answer = r_answer[:-1]
+            if r_answer in candidate:
+                r_correct_num += 1
+    print(r_correct_num,"//",real_num, "= ",r_correct_num/real_num*100)
+    return correct_num/answer_num*100
 
 if __name__ == "__main__":
     import data_loader as dataLoader

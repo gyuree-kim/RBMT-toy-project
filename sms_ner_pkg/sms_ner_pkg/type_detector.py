@@ -3,6 +3,7 @@ import os
 def type_detector(message):
     type = ""
     num = "0"
+    # 방문, 이용자, 식사하신 분,식사 후, 탑승자
 
     if "신규 확진자" in message and "방문자" not in message :
         type = "infected"
